@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { MoreVertical, Eye, Edit, Trash2 } from "lucide-react";
 
@@ -11,7 +11,7 @@ const DashboardActionButton = ({
   showView = true,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [position, setPosition] = useState({ top: 0, left: 0, ready: false });
   const buttonRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -21,12 +21,16 @@ const DashboardActionButton = ({
     if (fn) fn(record);
   };
 
+  // Measures the menu's real rendered size (varies with zoom/DPI/content)
+  // instead of assuming a fixed height, so placement stays correct on any
+  // screen resolution or zoom level.
   const calculatePosition = () => {
-    if (!buttonRef.current) return { top: 0, left: 0 };
+    if (!buttonRef.current) return { top: 0, left: 0, ready: false };
     const rect = buttonRef.current.getBoundingClientRect();
-    const menuWidth = 180;
-    const menuHeight = 220;
+    const menuWidth = menuRef.current?.offsetWidth || 180;
+    const menuHeight = menuRef.current?.offsetHeight || 150;
     const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
     const padding = 8;
 
     let top = rect.bottom + 4;
@@ -37,12 +41,15 @@ const DashboardActionButton = ({
       if (top < padding) top = viewportHeight - menuHeight - padding;
     }
     if (left < padding) left = rect.left;
+    if (left + menuWidth > viewportWidth - padding)
+      left = viewportWidth - menuWidth - padding;
 
-    return { top, left };
+    return { top, left, ready: true };
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isOpen) setPosition(calculatePosition());
+    else setPosition({ top: 0, left: 0, ready: false });
   }, [isOpen]);
   useEffect(() => {
     if (!isOpen) return;
@@ -101,7 +108,7 @@ const DashboardActionButton = ({
                 position: "fixed",
                 top: `${position.top}px`,
                 left: `${position.left}px`,
-                visibility: position.top === 0 ? "hidden" : "visible",
+                visibility: position.ready ? "visible" : "hidden",
               }}
               className="z-[10000] w-48 bg-white rounded-lg shadow-xl border border-slate-100 py-1 overflow-hidden ring-1 ring-black/5"
             >
