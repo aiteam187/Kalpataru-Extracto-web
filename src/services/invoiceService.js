@@ -236,8 +236,14 @@ class InvoiceService {
     const query = {};
     if (params.direction) query.direction = params.direction;
 
-    // Correct endpoint: /history (not /history/all)
-    const response = await api.get("/history", { params: query });
+    // /history defaults to limit=50 server-side — past 50 total records,
+    // that silently truncated both the stats and the whole table to only
+    // the most recent 50, so "Total Records" (and the table itself) froze
+    // in place while new records kept being added underneath. /history/all
+    // returns the complete dataset; the dashboard already paginates the
+    // result client-side, so this is a straight correctness fix, not a
+    // behavior change.
+    const response = await api.get("/history/all", { params: query });
     return (response.data.records || []).map(mapRecord);
   }
 
