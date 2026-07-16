@@ -22,7 +22,7 @@ const ConfirmDialog = ({
   const iconColor = confirmColor === "indigo" ? "text-indigo-600" : "text-red-600";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
