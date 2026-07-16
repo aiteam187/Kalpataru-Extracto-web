@@ -172,6 +172,7 @@ const useInvoiceData = (options = {}) => {
     fetchRecords,
     fetchAllData,
     refresh,
+    silentPoll,
     setRecords,
     setStats,
   };

@@ -15,7 +15,7 @@ const Dashboard = () => {
   const [vendorSearch, setVendorSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState(null);
 
-  const { stats, records, loading, error, refresh } = useInvoiceData({
+  const { stats, records, loading, error, refresh, silentPoll } = useInvoiceData({
     autoFetch: true,
     params: {},
   });
@@ -40,16 +40,32 @@ const Dashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Auto-refresh dashboard data every hour
+  // Auto-refresh dashboard data so records saved elsewhere (e.g. from the
+  // Tab app) show up here without the user needing to click Sync Now or
+  // reload the page. A once-an-hour poll left an already-open dashboard
+  // tab showing stale data for up to an hour after a real save — this
+  // polls every 20s, and also refetches immediately whenever the tab
+  // regains focus/visibility (the common "switched away and back" case).
+  // Uses silentPoll (not refresh) so it doesn't flash the full-page loading
+  // spinner on every background check — only the initial load and an
+  // explicit Sync Now click do that.
   useEffect(() => {
-    const hourlyTimer = setInterval(
-      () => {
-        handleSyncRun();
-      },
-      60 * 60 * 1000,
-    );
-    return () => clearInterval(hourlyTimer);
-  }, []);
+    const pollTimer = setInterval(() => {
+      silentPoll();
+    }, 20 * 1000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") silentPoll();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("focus", handleVisibility);
+
+    return () => {
+      clearInterval(pollTimer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("focus", handleVisibility);
+    };
+  }, [silentPoll]);
 
   useEffect(() => {
     const now = new Date();
