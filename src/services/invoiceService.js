@@ -22,18 +22,22 @@ const resolveVendorName = (extracted_data, manual_fields) => {
   }
   if (!extracted_data) return "-";
 
-  const issuer = extracted_data.issuer_details || extracted_data.issuer || extracted_data.seller || extracted_data.from_party || {};
+  // extracted_data.issuer can itself be a nested object (name/address/gstin/...)
+  // rather than a plain string, depending on how the LLM structured this
+  // document — never return it directly as a fallback value below.
+  const issuer = extracted_data.issuer_details || extracted_data.seller || extracted_data.from_party ||
+    (typeof extracted_data.issuer === "object" ? extracted_data.issuer : null) || {};
   const meta = extracted_data.document_metadata || {};
   const transporter = extracted_data.transporter_details || {};
   const src = extracted_data.source_destination || {};
 
-  return (
+  const resolved =
     // Flat top-level (new universal prompt outputs)
     extracted_data.supplier_name ||
     extracted_data.vendor_name ||
     extracted_data.company_name ||
     extracted_data.party_name ||
-    extracted_data.issuer ||
+    (typeof extracted_data.issuer === "string" ? extracted_data.issuer : null) ||
     // Nested issuer block (old or new)
     issuer.company_name_printed_on_the_letterhead ||
     issuer.company_name ||
@@ -54,8 +58,11 @@ const resolveVendorName = (extracted_data, manual_fields) => {
     meta.party_name ||
     meta.supplier_name ||
     src.source_site ||
-    "-"
-  );
+    "-";
+
+  // Final safety net — a table cell must never receive a raw object,
+  // regardless of what shape a future document's extracted_data takes.
+  return typeof resolved === "string" ? resolved : "-";
 };
 
 // ── Helper: pull document / invoice number ────────────────────────────────────
@@ -119,8 +126,10 @@ const resolveAmount = (extracted_data, manual_fields) => {
 
 // ── Invoices for the head office print "HO" as the site — display the full
 // registered company name instead so it reads consistently on the dashboard.
+// Also guards against a non-string value (e.g. a nested object) ever
+// reaching a table cell, which would crash the render.
 const normalizeProjectSite = (site) => {
-  if (!site || typeof site !== "string") return site;
+  if (typeof site !== "string" || !site) return "-";
   return site.trim().toUpperCase() === "HO" ? "Kalpataru Pvt Ltd" : site;
 };
 
