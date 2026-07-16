@@ -244,6 +244,7 @@ const DashboardViewModal = ({ isOpen, onClose, recordId, onEdit }) => {
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [zoomedImage, setZoomedImage] = useState(null); // { label, url } | null
 
   useEffect(() => {
     if (isOpen && recordId) {
@@ -492,13 +493,17 @@ const DashboardViewModal = ({ isOpen, onClose, recordId, onEdit }) => {
                       .filter(({ url }) => url)
                       .map(({ label, url }) => (
                         <div key={label} className="text-center">
-                          <a href={url} target="_blank" rel="noreferrer">
+                          <button
+                            type="button"
+                            onClick={() => setZoomedImage({ label, url })}
+                            className="block"
+                          >
                             <img
                               src={url}
                               alt={label}
-                              className="h-32 w-auto rounded border border-gray-200 object-cover hover:opacity-80 transition-opacity"
+                              className="h-32 w-auto rounded border border-gray-200 object-cover hover:opacity-80 transition-opacity cursor-zoom-in"
                             />
-                          </a>
+                          </button>
                           <p className="text-xs text-gray-500 mt-1">{label}</p>
                         </div>
                       ))}
@@ -519,6 +524,34 @@ const DashboardViewModal = ({ isOpen, onClose, recordId, onEdit }) => {
           </button>
         </div>
       </div>
+
+      {/* Image lightbox — clicking a thumbnail used to navigate to the raw
+          blob URL (which the browser/CDN serves as a download), instead of
+          showing it enlarged. This overlays it in-page instead. */}
+      {zoomedImage && (
+        <div
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-6"
+          onClick={() => setZoomedImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setZoomedImage(null)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+          <div className="flex flex-col items-center gap-3 max-w-full max-h-full">
+            <img
+              src={zoomedImage.url}
+              alt={zoomedImage.label}
+              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <p className="text-sm font-medium text-white">{zoomedImage.label}</p>
+          </div>
+        </div>
+      )}
     </div>,
     document.body,
   );
