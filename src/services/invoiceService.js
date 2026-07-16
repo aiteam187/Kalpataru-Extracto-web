@@ -155,6 +155,61 @@ const resolveProjectSite = (extracted_data, manual_fields) => {
   );
 };
 
+// ── Helper: parse a document's own date string into a real Date ────────────
+// The extraction prompt tells the LLM to return dates "exactly as written on
+// the document" (e.g. "28/06/2026") rather than reformat them — so this is
+// DD/MM/YYYY (or DD-MM-YYYY), NOT the MM/DD/YYYY new Date() assumes.
+const parseDocumentDate = (dateStr) => {
+  if (!dateStr || typeof dateStr !== "string") return null;
+  const trimmed = dateStr.trim();
+
+  const dmy = trimmed.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (dmy) {
+    let [, d, mo, y] = dmy;
+    if (y.length === 2) y = `20${y}`;
+    const day = parseInt(d, 10);
+    const month = parseInt(mo, 10) - 1;
+    const year = parseInt(y, 10);
+    if (month >= 0 && month <= 11 && day >= 1 && day <= 31) {
+      const parsed = new Date(year, month, day);
+      if (!isNaN(parsed.getTime())) return parsed;
+    }
+  }
+
+  // Fall back to whatever Date() itself can parse (e.g. ISO strings)
+  const iso = new Date(trimmed);
+  return isNaN(iso.getTime()) ? null : iso;
+};
+
+// ── Helper: pull the actual invoice/document date out of extracted_data ────
+// Previously the dashboard just showed created_at (when it was uploaded),
+// not the date printed on the document — this pulls the real one, checked
+// in priority order, and only falls back to the upload timestamp if the
+// document genuinely has no date the LLM could read.
+const INVOICE_DATE_KEYS = [
+  "date", "invoice_date", "challan_date", "dispatch_date", "entry_date",
+  "document_date", "bill_date", "receipt_date", "po_date", "transport_date",
+];
+
+const resolveInvoiceDate = (extracted_data, manual_fields, fallbackCreatedAt) => {
+  if (manual_fields) {
+    const manualVal = resolveFromManualFields(manual_fields, ["date"]);
+    const parsed = parseDocumentDate(manualVal);
+    if (parsed) return parsed.toISOString();
+  }
+
+  if (extracted_data) {
+    const meta = extracted_data.document_metadata || {};
+    const transporter = extracted_data.transporter_details || {};
+    for (const key of INVOICE_DATE_KEYS) {
+      const parsed = parseDocumentDate(extracted_data[key] || meta[key] || transporter[key]);
+      if (parsed) return parsed.toISOString();
+    }
+  }
+
+  return fallbackCreatedAt || null;
+};
+
 // ─── Main record mapper ──────────────────────────────────────────────────────
 const mapRecord = (r) => {
   const transporter = r.extracted_data?.transporter_details || {};
@@ -176,7 +231,7 @@ const mapRecord = (r) => {
     project_site: resolveProjectSite(r.extracted_data, r.manual_fields),
     destination_site: src_dst.destination_site || resolveFromManualFields(r.manual_fields, ["destination", "to"]) || "-",
     invoice_number: resolveDocumentNumber(r.extracted_data, r.id, r.manual_fields),
-    invoice_date: r.created_at || null,
+    invoice_date: resolveInvoiceDate(r.extracted_data, r.manual_fields, r.created_at),
     updated_at: r.updated_at || null,
     invoice_amount: resolveAmount(r.extracted_data, r.manual_fields),
     approval_status: r.success ? "Approve" : "Reject",
