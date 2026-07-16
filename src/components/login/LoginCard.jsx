@@ -22,7 +22,7 @@ const LoginCard = ({
 
       {/* Form content on top */}
       <div className="login-form">
-        <h1 className="login-title">Loginn</h1>
+        <h1 className="login-title">Login</h1>
 
         {errors.general && (
           <div className="login-error">
