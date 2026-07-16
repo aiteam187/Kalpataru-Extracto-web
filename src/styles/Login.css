@@ -1,0 +1,422 @@
+/* FULL PAGE LOGIN - RESPONSIVE + ZOOM RESISTANT */
+
+.login-container {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background Layer */
+.login-bg-layer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  text-align: right;
+}
+
+.login-bg-image {
+  height: 100%;
+  width: auto;
+  min-width: 100%;
+  object-fit: cover;
+  object-position: right center;
+  display: inline-block;
+}
+
+/* Content Layer */
+.login-content-layer {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: clamp(2rem, 10vw, 12rem);
+}
+
+.login-content {
+  width: clamp(20rem, 39vw, 48rem);
+  position: relative;
+  padding-top: clamp(4rem, 12vh, 10rem);
+}
+
+/* Logo */
+.login-logo-outside {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.login-logo-outside img {
+  height: clamp(3rem, 8vh, 6rem);
+  width: auto;
+  display: block;
+}
+
+/* Card */
+.login-card-wrapper {
+  position: relative;
+  width: 100%;
+  border: clamp(1px, 0.15vw, 3px) solid #0ba5e8;
+  border-radius: clamp(1rem, 1.8vw, 2.2rem);
+  background: transparent;
+  min-height: clamp(25rem, 52vh, 40rem);
+}
+
+.login-card-box,
+.login-card-blue {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: clamp(1rem, 1.8vw, 2.2rem);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.login-card-blue {
+  z-index: 2;
+}
+
+/* Form */
+.login-form {
+  position: relative;
+  z-index: 3;
+  padding: clamp(1rem, 2.5vh, 2rem) clamp(1.5rem, 3vw, 3.5rem)
+    clamp(1.2rem, 2.8vh, 2.2rem);
+  width: 100%;
+}
+
+.login-title {
+  font-size: clamp(1.5rem, 2vw, 2.4rem);
+  font-weight: 700;
+  color: #0369a1;
+  margin-bottom: clamp(0.8rem, 1.5vh, 1.2rem);
+  text-align: left;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+  line-height: 1.2;
+}
+
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.4rem, 0.5vw, 0.7rem);
+  padding: clamp(0.4rem, 0.8vh, 0.6rem) clamp(0.6rem, 1vw, 1.2rem);
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: clamp(0.3rem, 0.4vw, 0.5rem);
+  margin-bottom: clamp(0.6rem, 1.2vh, 0.9rem);
+  color: #991b1b;
+  font-size: clamp(0.75rem, 0.73vw, 0.9rem);
+}
+
+.form-group {
+  margin-bottom: clamp(0.8rem, 1.8vh, 1.4rem);
+}
+
+.form-label {
+  display: block;
+  font-size: clamp(0.75rem, 0.73vw, 0.9rem);
+  font-weight: 500;
+  color: #1e293b;
+  margin-bottom: clamp(0.3rem, 0.6vh, 0.5rem);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+  line-height: 1.4;
+}
+
+.form-input {
+  width: 100%;
+  padding: clamp(0.5rem, 1vh, 0.8rem) clamp(0.8rem, 1.2vw, 1.5rem);
+  font-size: clamp(0.8rem, 0.78vw, 1rem);
+  color: #1e293b;
+  background: #ffffff;
+  border: clamp(1px, 0.08vw, 2px) solid #cde8f7;
+  border-radius: clamp(0.4rem, 0.6vw, 0.8rem);
+  outline: none;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+.form-input:focus {
+  border-color: #0ba5e8;
+  box-shadow: 0 0 0 clamp(2px, 0.15vw, 4px) rgba(11, 165, 232, 0.12);
+}
+
+.form-input:disabled {
+  opacity: 0.6;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: clamp(0.6rem, 1vw, 1.2rem);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: clamp(0.2rem, 0.3vw, 0.4rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:hover {
+  color: #6b7280;
+}
+
+.password-toggle svg {
+  width: clamp(0.9rem, 0.94vw, 1.2rem);
+  height: clamp(0.9rem, 0.94vw, 1.2rem);
+}
+
+.login-button {
+  width: 100%;
+  padding: clamp(0.6rem, 1.1vh, 0.9rem) 0;
+  margin-top: clamp(0.8rem, 1.5vh, 1.2rem);
+  margin-bottom: clamp(0.6rem, 1.2vh, 0.9rem);
+  font-size: clamp(0.85rem, 0.83vw, 1.05rem);
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(90deg, #0ba5e8 0%, #0679c7 100%);
+  border: none;
+  border-radius: clamp(0.4rem, 0.6vw, 0.8rem);
+  cursor: pointer;
+  box-shadow: 0 clamp(0.2rem, 0.4vh, 0.3rem) clamp(0.6rem, 1.2vh, 0.9rem)
+    rgba(6, 121, 199, 0.35);
+  transition: all 0.3s;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+}
+
+.login-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 clamp(0.3rem, 0.6vh, 0.4rem) clamp(0.8rem, 1.5vh, 1.1rem)
+    rgba(6, 121, 199, 0.42);
+}
+
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.button-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.4rem, 0.5vw, 0.7rem);
+}
+
+.spinner {
+  width: clamp(0.9rem, 0.94vw, 1.2rem);
+  height: clamp(0.9rem, 0.94vw, 1.2rem);
+  border: clamp(1px, 0.1vw, 3px) solid #ffffff;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.terms-text {
+  text-align: center;
+  font-size: clamp(0.7rem, 0.68vw, 0.85rem);
+  font-weight: 400;
+  color: #1e293b;
+  line-height: 1.6;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+}
+
+.terms-link {
+  color: #0ba5e8;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.terms-link:hover {
+  text-decoration: underline;
+}
+
+/* RESPONSIVE BREAKPOINTS */
+
+/* Tablets - CENTER layout */
+@media (max-width: 1024px) {
+  .login-content-layer {
+    justify-content: center;
+    padding-left: 0;
+    padding: 0 clamp(1rem, 4vw, 3rem);
+  }
+
+  .login-content {
+    width: clamp(18rem, 56vw, 40rem);
+    padding-top: clamp(3rem, 10vh, 7rem);
+  }
+
+  .login-card-wrapper {
+    min-height: clamp(22rem, 54vh, 35rem);
+  }
+
+  .login-logo-outside img {
+    height: clamp(2.5rem, 6vh, 4.5rem);
+  }
+
+  .login-title {
+    font-size: clamp(1.3rem, 3.2vw, 2rem);
+  }
+
+  .form-label,
+  .login-error,
+  .terms-text {
+    font-size: clamp(0.8rem, 1.8vw, 1.1rem);
+  }
+
+  .form-input {
+    font-size: clamp(0.85rem, 2vw, 1.2rem);
+    padding: clamp(0.5rem, 1.2vh, 0.9rem) clamp(1rem, 2.5vw, 1.8rem);
+  }
+
+  .login-button {
+    font-size: clamp(0.85rem, 2vw, 1.2rem);
+    padding: clamp(0.6rem, 1.4vh, 1rem) 0;
+  }
+
+  .password-toggle svg {
+    width: clamp(1rem, 2vw, 1.4rem);
+    height: clamp(1rem, 2vw, 1.4rem);
+  }
+
+  .spinner {
+    width: clamp(1rem, 2vw, 1.4rem);
+    height: clamp(1rem, 2vw, 1.4rem);
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .login-bg-layer {
+    display: none;
+  }
+
+  .login-container {
+    background: #f8fafc;
+  }
+
+  .login-content-layer {
+    padding: 0 clamp(0.8rem, 5vw, 2rem);
+  }
+
+  .login-content {
+    width: clamp(17rem, 90vw, 30rem);
+    padding-top: clamp(3rem, 12vh, 8rem);
+  }
+
+  .login-card-wrapper {
+    min-height: clamp(20rem, 58vh, 32rem);
+    border-radius: clamp(1.5rem, 4vw, 2.5rem);
+    border-width: clamp(1.5px, 0.3vw, 3px);
+  }
+
+  .login-card-box,
+  .login-card-blue {
+    border-radius: clamp(1.5rem, 4vw, 2.5rem);
+  }
+
+  .login-logo-outside {
+    top: clamp(-3rem, -7vh, -5rem);
+  }
+
+  .login-logo-outside img {
+    height: clamp(2.5rem, 8vh, 5rem);
+  }
+
+  .login-form {
+    padding: clamp(1rem, 3vh, 2rem) clamp(1.2rem, 6vw, 2.5rem);
+  }
+
+  .login-title {
+    font-size: clamp(1.2rem, 6vw, 2rem);
+    margin-bottom: clamp(0.8rem, 2vh, 1.5rem);
+  }
+
+  .form-label,
+  .login-error {
+    font-size: clamp(0.75rem, 3.5vw, 1.1rem);
+  }
+
+  .form-input {
+    font-size: clamp(0.85rem, 4vw, 1.2rem);
+    padding: clamp(0.6rem, 1.5vh, 1rem) clamp(1rem, 4vw, 1.8rem);
+    border-radius: clamp(0.6rem, 2vw, 1.2rem);
+    border-width: clamp(1px, 0.2vw, 2px);
+  }
+
+  .login-button {
+    font-size: clamp(0.85rem, 4vw, 1.2rem);
+    padding: clamp(0.7rem, 1.8vh, 1.2rem) 0;
+    border-radius: clamp(0.6rem, 2vw, 1.2rem);
+  }
+
+  .terms-text {
+    font-size: clamp(0.65rem, 3vw, 0.95rem);
+  }
+
+  .password-toggle svg {
+    width: clamp(1rem, 4.5vw, 1.5rem);
+    height: clamp(1rem, 4.5vw, 1.5rem);
+  }
+
+  .spinner {
+    width: clamp(0.9rem, 4vw, 1.3rem);
+    height: clamp(0.9rem, 4vw, 1.3rem);
+    border-width: clamp(1.5px, 0.3vw, 3px);
+  }
+}
+
+/* Very small mobile */
+@media (max-width: 375px) {
+  .login-content {
+    width: clamp(16rem, 92vw, 25rem);
+  }
+
+  .login-card-wrapper {
+    min-height: clamp(19rem, 60vh, 30rem);
+  }
+
+  .login-form {
+    padding: clamp(0.9rem, 2.5vh, 1.5rem) clamp(1rem, 5vw, 1.8rem);
+  }
+
+  .form-group {
+    margin-bottom: clamp(0.7rem, 1.5vh, 1.2rem);
+  }
+}
