@@ -117,20 +117,27 @@ const resolveAmount = (extracted_data, manual_fields) => {
   );
 };
 
+// ── Invoices for the head office print "HO" as the site — display the full
+// registered company name instead so it reads consistently on the dashboard.
+const normalizeProjectSite = (site) => {
+  if (!site || typeof site !== "string") return site;
+  return site.trim().toUpperCase() === "HO" ? "Kalpataru Pvt Ltd" : site;
+};
+
 // ─── Helper: pull project site ───────────────────────────────────────────────
 const resolveProjectSite = (extracted_data, manual_fields) => {
   if (manual_fields) {
     const manualVal = resolveFromManualFields(manual_fields, [
       "project", "site", "project site", "location", "where"
     ]);
-    if (manualVal) return manualVal;
+    if (manualVal) return normalizeProjectSite(manualVal);
   }
   if (!extracted_data) return "-";
 
   const meta = extracted_data.document_metadata || {};
   const src = extracted_data.source_destination || {};
 
-  return (
+  return normalizeProjectSite(
     meta.project_site ||
     src.source_site ||
     meta.site ||

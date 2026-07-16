@@ -51,6 +51,7 @@ const SortDropdown = ({ sortConfig, onSort }) => {
   const sortOptions = [
     { key: "ID", label: "ID" },
     { key: "project_site", label: "Project Site" }, // ← was vendor_name / Issuer
+    { key: "vendor_name", label: "Vendor Name" },
     { key: "destination_site", label: "Destination" }, // ← new
     { key: "invoice_number", label: "Document No." },
     { key: "invoice_date", label: "Date" },
@@ -411,6 +412,7 @@ const ColumnCustomizationDropdown = ({
   const columns = [
     { key: "id", label: "ID" },
     { key: "project_site", label: "Project Site" }, // ← was vendor_name / Issuer
+    { key: "vendor_name", label: "Vendor Name" },
     { key: "destination_site", label: "Destination" }, // ← new
     { key: "invoice_number", label: "Document No." },
     { key: "invoice_date", label: "Date" },
@@ -492,6 +494,7 @@ const ColumnCustomizationDropdown = ({
                   setVisibleColumns({
                     id: true,
                     project_site: true, // ← was vendor_name
+                    vendor_name: true,
                     vehicle_number: true,
                     approval_status: true,
                     destination_site: false,
@@ -554,6 +557,7 @@ const DashboardTable = ({
   const [visibleColumns, setVisibleColumns] = useState({
     id: true,
     project_site: true,
+    vendor_name: true,
     destination_site: true,
     invoice_number: true,
     invoice_date: true,

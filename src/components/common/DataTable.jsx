@@ -19,7 +19,8 @@ const DataTable = ({
 }) => {
   const defaultVisibleColumns = {
     id: true,
-    project_site: true, // ← replaces vendor_name
+    project_site: true,
+    vendor_name: true,
     destination_site: true, // ← new
     invoice_number: true,
     invoice_date: true,
@@ -32,6 +33,7 @@ const DataTable = ({
   const simpleVisibleColumns = {
     id: true,
     project_site: false,
+    vendor_name: false,
     destination_site: false,
     invoice_number: false,
     invoice_date: true,
@@ -174,6 +176,7 @@ const DataTable = ({
   const headers = [];
   if (columns.id) headers.push("SR#");
   if (columns.project_site) headers.push("PROJECT SITE"); // ← was ISSUER
+  if (columns.vendor_name) headers.push("VENDOR NAME");
   if (columns.destination_site) headers.push("DESTINATION"); // ← new
   if (columns.invoice_number) headers.push("DOCUMENT NO.");
   if (columns.invoice_date) headers.push("DATE");
@@ -232,6 +235,18 @@ const DataTable = ({
                         {displayValue(row.project_site)}
                       </p>
                     </div>
+                  </td>
+                )}
+
+                {/* Vendor Name */}
+                {columns.vendor_name && (
+                  <td className="px-6 py-5">
+                    <p
+                      className="text-sm font-medium text-slate-900 truncate max-w-[180px]"
+                      title={row.vendor_name || "-"}
+                    >
+                      {displayValue(row.vendor_name)}
+                    </p>
                   </td>
                 )}
 
