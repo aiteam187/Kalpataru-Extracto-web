@@ -190,6 +190,10 @@ const calculateStats = (records) => {
     (r) => r.inward_outward?.toLowerCase() === "returnable",
   ).length;
 
+  const manual = records.filter(
+    (r) => r.entry_type?.toLowerCase() === "manual",
+  ).length;
+
   const today = records.filter((r) => {
     if (!r.action_date) return false;
     const d = new Date(r.action_date);
@@ -200,18 +204,13 @@ const calculateStats = (records) => {
     );
   }).length;
 
-  const lastHour = records.filter((r) => {
-    if (!r.action_date) return false;
-    return now - new Date(r.action_date) <= 60 * 60 * 1000;
-  }).length;
-
   return [
     { label: "Total Records", value: String(total) },
     { label: "Inward", value: String(inward) },
     { label: "Outward", value: String(outward) },
     { label: "Returnable", value: String(returnable) },
+    { label: "Manual", value: String(manual) },
     { label: "Today", value: String(today) },
-    { label: "Last Hour", value: String(lastHour) },
   ];
 };
 

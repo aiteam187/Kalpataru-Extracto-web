@@ -40,6 +40,17 @@ const Dashboard = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Auto-refresh dashboard data every hour
+  useEffect(() => {
+    const hourlyTimer = setInterval(
+      () => {
+        handleSyncRun();
+      },
+      60 * 60 * 1000,
+    );
+    return () => clearInterval(hourlyTimer);
+  }, []);
+
   useEffect(() => {
     const now = new Date();
     const roundedTime = new Date(now);
@@ -91,12 +102,12 @@ const Dashboard = () => {
       } else if (label.includes("RETURNABLE")) {
         color = "amber";
         filterKey = "returnable";
+      } else if (label.includes("MANUAL")) {
+        color = "rose";
+        filterKey = "manual";
       } else if (label.includes("TODAY")) {
         color = "emerald";
         filterKey = "today";
-      } else if (label.includes("LAST HOUR")) {
-        color = "rose";
-        filterKey = "lasthour";
       }
 
       return {
@@ -260,10 +271,8 @@ const Dashboard = () => {
             d.getFullYear() === now.getFullYear()
           );
         }
-        if (activeFilter === "lasthour") {
-          if (!r.action_date) return false;
-          return new Date() - new Date(r.action_date) <= 60 * 60 * 1000;
-        }
+        if (activeFilter === "manual")
+          return r.entry_type?.toLowerCase() === "manual";
         return true;
       })
     : searchFilteredRecords;

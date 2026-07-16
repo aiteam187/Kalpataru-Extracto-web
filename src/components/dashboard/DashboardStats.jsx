@@ -10,7 +10,7 @@ const getIconForStat = (label) => {
   if (labelUpper.includes("OUTWARD")) return "/Outward1.png";
   if (labelUpper.includes("RETURNABLE")) return "/Pending1.png";
   if (labelUpper.includes("TODAY")) return "/Approved1.png";
-  if (labelUpper.includes("LAST HOUR")) return "/Rejected1.png";
+  if (labelUpper.includes("MANUAL")) return "/Rejected1.png";
 
   return "/TotalInvoice1.png";
 };
