@@ -592,6 +592,20 @@ const DashboardTable = ({
     setCurrentPage(1);
   }, [entryTypeTab]);
 
+  // Records are filtered by entryTypeTab below (independent of activeFilter),
+  // so clicking the "Manual" stats card set activeFilter="manual" but never
+  // actually switched the Automatic/Manual toggle — the table stayed on
+  // "automatic" and showed nothing. Sync the toggle to whichever dataset the
+  // clicked stat card actually belongs to.
+  React.useEffect(() => {
+    if (activeFilter === "manual" && entryTypeTab !== "manual") {
+      setEntryTypeTab("manual");
+    } else if (activeFilter && activeFilter !== "manual" && entryTypeTab !== "automatic") {
+      setEntryTypeTab("automatic");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFilter]);
+
   const handleSort = (key) => {
     if (key === null) {
       setSortConfig({ key: null, direction: null });
