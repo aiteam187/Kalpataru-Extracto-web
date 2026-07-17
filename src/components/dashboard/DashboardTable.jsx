@@ -934,10 +934,10 @@ const DashboardTable = ({
     <div className="flex flex-col w-full h-full">
       {/* Controls Row */}
       <div
-        className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50/30 to-white shrink-0"
+        className="px-6 py-4 border-b border-slate-100 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 bg-gradient-to-r from-slate-50/30 to-white shrink-0"
         style={{ position: "relative", zIndex: 100 }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div>
             <h2 className="text-sm font-bold text-gray-900 leading-tight">
               Data Status
@@ -946,7 +946,7 @@ const DashboardTable = ({
               Real-time gate pass monitoring
             </p>
           </div>
-          <div className="h-8 w-px bg-gray-200"></div>
+          <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
           <span className="px-2.5 py-1 bg-teal-50 text-teal-700 rounded-full text-[10px] font-bold uppercase border border-teal-100">
             {totalItems} Records
           </span>
@@ -966,11 +966,11 @@ const DashboardTable = ({
           )}
         </div>
 
-        <div className="flex items-center gap-3 flex-nowrap">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <span className="text-xs text-slate-500 whitespace-nowrap">
             Page {currentPage} of {totalPages}
           </span>
-          <div className="h-6 w-px bg-gray-200"></div>
+          <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
           <div className="flex items-center gap-1 p-1 bg-white border border-slate-300 rounded-lg">
             {["automatic", "manual"].map((t) => (
               <button
@@ -986,7 +986,7 @@ const DashboardTable = ({
               </button>
             ))}
           </div>
-          <div className="h-6 w-px bg-gray-200"></div>
+          <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
           <SortDropdown sortConfig={sortConfig} onSort={handleSort} />
           <AdvancedFilterDropdown
             tableFilter={tableFilter}
