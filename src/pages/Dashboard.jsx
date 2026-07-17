@@ -68,12 +68,7 @@ const Dashboard = () => {
   }, [silentPoll]);
 
   useEffect(() => {
-    const now = new Date();
-    const roundedTime = new Date(now);
-    roundedTime.setMinutes(0);
-    roundedTime.setSeconds(0);
-    roundedTime.setMilliseconds(0);
-    setLastSyncTime(roundedTime);
+    setLastSyncTime(new Date());
   }, []);
 
   const getSyncStatusDisplay = () => {
@@ -82,10 +77,7 @@ const Dashboard = () => {
     const minutes = lastSyncTime.getMinutes();
     const ampm = hours >= 12 ? "PM" : "AM";
     const displayHours = hours % 12 || 12;
-    const timeString =
-      minutes === 0
-        ? `${displayHours}:00 ${ampm}`
-        : `${displayHours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+    const timeString = `${displayHours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
     return `Last Sync - ${timeString}`;
   };
 
@@ -187,13 +179,8 @@ const Dashboard = () => {
   const handleSyncRun = async () => {
     try {
       setSyncing(true);
-      const syncStartTime = new Date();
       await invoiceService.syncData({});
-      const roundedTime = new Date(syncStartTime);
-      roundedTime.setMinutes(0);
-      roundedTime.setSeconds(0);
-      roundedTime.setMilliseconds(0);
-      setLastSyncTime(roundedTime);
+      setLastSyncTime(new Date());
       await refresh({});
       showNotification("Sync completed successfully", "success");
     } catch (err) {
