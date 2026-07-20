@@ -526,6 +526,7 @@ const DashboardTable = ({
   onUnblockVendor,
   onDeleteRecord,
   onEditRecord,
+  onRecordUpdated,
   showNotification,
   activeFilter,
   onClearFilter,
@@ -1154,6 +1155,7 @@ const DashboardTable = ({
           handleCloseViewModal();
           handleEdit(record);
         }}
+        onUpdated={onRecordUpdated}
       />
 
       <DashboardEditModal

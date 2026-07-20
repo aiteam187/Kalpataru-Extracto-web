@@ -389,6 +389,7 @@ const DashboardEditModal = ({ isOpen, onClose, record, onSave }) => {
   const [extracted, setExtracted] = useState({});
   const [manualFields, setManualFields] = useState([]);
   const [isManual, setIsManual] = useState(false);
+  const [returnStatus, setReturnStatus] = useState("active");
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
@@ -415,6 +416,7 @@ const DashboardEditModal = ({ isOpen, onClose, record, onSave }) => {
       setDirection(full.raw?.direction || "inward");
       setDocumentType(full.raw?.document_type || "");
       setExtracted(full.raw?.extracted_data || {});
+      setReturnStatus(full.return_status || "active");
       setManualFields(
         (full.manual_fields || []).map((f, i) => ({
           id: `field-${i}-${Date.now()}`,
@@ -428,6 +430,7 @@ const DashboardEditModal = ({ isOpen, onClose, record, onSave }) => {
       setDirection(record.inward_outward?.toLowerCase() || "inward");
       setDocumentType(record.document_type || "");
       setExtracted(record.extracted_data || {});
+      setReturnStatus(record.return_status || "active");
       setManualFields(
         (record.manual_fields || []).map((f, i) => ({
           id: `field-${i}-${Date.now()}`,
@@ -465,6 +468,7 @@ const DashboardEditModal = ({ isOpen, onClose, record, onSave }) => {
           direction,
           document_type: documentType,
           extracted_data: extracted,
+          ...(direction === "returnable" ? { return_status: returnStatus } : {}),
         });
       }
       if (onSave) await onSave();
@@ -580,6 +584,31 @@ const DashboardEditModal = ({ isOpen, onClose, record, onSave }) => {
                   />
                 </div>
               </div>
+
+              {/* Return status — only relevant/shown when direction is returnable */}
+              {direction === "returnable" && (
+                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                  <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">
+                    Return Status
+                  </label>
+                  <div className="flex gap-2 flex-wrap">
+                    {["active", "returned"].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setReturnStatus(s)}
+                        className={`px-4 py-1.5 rounded-lg text-sm font-semibold capitalize transition-all ${
+                          returnStatus === s
+                            ? "bg-indigo-600 text-white shadow"
+                            : "bg-white border border-slate-300 text-slate-600 hover:border-indigo-400"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* ── Flat fields living directly on extracted_data (not nested
                   in a section) — e.g. supplier_name, vendor_name from newer

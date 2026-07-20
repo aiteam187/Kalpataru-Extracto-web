@@ -8,6 +8,8 @@ import {
   ArrowUp,
   ArrowDown,
   Pencil,
+  PackageCheck,
+  HelpCircle,
 } from "lucide-react";
 import invoiceService from "../../services/invoiceService";
 
@@ -240,11 +242,14 @@ const Section = ({ title, data }) => {
 };
 
 // ── Main modal ────────────────────────────────────────────────────────────────
-const DashboardViewModal = ({ isOpen, onClose, recordId, onEdit }) => {
+const DashboardViewModal = ({ isOpen, onClose, recordId, onEdit, onUpdated }) => {
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [zoomedImage, setZoomedImage] = useState(null); // { label, url } | null
+  const [confirmReturnOpen, setConfirmReturnOpen] = useState(false);
+  const [markingReturned, setMarkingReturned] = useState(false);
+  const [returnError, setReturnError] = useState(null);
 
   useEffect(() => {
     if (isOpen && recordId) {
@@ -271,10 +276,34 @@ const DashboardViewModal = ({ isOpen, onClose, recordId, onEdit }) => {
     }
   };
 
+  const handleMarkReturned = async () => {
+    if (!record) return;
+    setMarkingReturned(true);
+    setReturnError(null);
+    try {
+      await invoiceService.updateRecord(record.ID || record.id, {
+        return_status: "returned",
+      });
+      setConfirmReturnOpen(false);
+      await fetchRecord(); // refresh this modal's own view with the new status/timestamp
+      if (onUpdated) onUpdated();
+    } catch (err) {
+      setReturnError(err.message || "Failed to mark as returned");
+    } finally {
+      setMarkingReturned(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   const extracted = record?.extracted_data || {};
   const direction = record?.inward_outward || record?.direction || "-";
+  const isReturnable = direction.toLowerCase() === "returnable";
+  const returnStatus = record?.return_status || "active";
+  const isReturned = returnStatus === "returned";
+  const returnedAtDisplay = record?.returned_at
+    ? new Date(record.returned_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+    : null;
   const docType = (
     record?.document_type ||
     extracted?.document_metadata?.document_type ||
@@ -396,6 +425,47 @@ const DashboardViewModal = ({ isOpen, onClose, recordId, onEdit }) => {
                   </div>
                 </div>
               </div>
+
+              {/* Return status — only shown for returnable items */}
+              {isReturnable && (
+                <div className="border border-gray-200 rounded-lg overflow-hidden mb-3 bg-white">
+                  <div className="px-4 py-3 bg-gray-50 flex items-center gap-2">
+                    <PackageCheck className="w-4 h-4 text-gray-500" />
+                    <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                      Return Status
+                    </span>
+                  </div>
+                  <div className="p-4 flex items-center justify-between gap-4 flex-wrap">
+                    <div>
+                      <span
+                        className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
+                          isReturned
+                            ? "bg-slate-100 text-slate-500"
+                            : "bg-emerald-50 text-emerald-600"
+                        }`}
+                      >
+                        {isReturned ? "Returned" : "Active"}
+                      </span>
+                      {isReturned && returnedAtDisplay && (
+                        <p className="text-xs text-gray-500 mt-1.5">
+                          Returned on {returnedAtDisplay}
+                        </p>
+                      )}
+                      {returnError && (
+                        <p className="text-xs text-red-500 mt-1.5">{returnError}</p>
+                      )}
+                    </div>
+                    {!isReturned && (
+                      <button
+                        onClick={() => setConfirmReturnOpen(true)}
+                        className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
+                      >
+                        Mark Returned
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {isManual ? (
                 <div className="mb-3">
@@ -549,6 +619,50 @@ const DashboardViewModal = ({ isOpen, onClose, recordId, onEdit }) => {
               onClick={(e) => e.stopPropagation()}
             />
             <p className="text-sm font-medium text-white">{zoomedImage.label}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Mark Returned confirmation — same Yes/Cancel pattern as Extracto-Tab's
+          ConfirmDialog, kept inline here rather than a shared component since
+          the two apps are separate codebases. */}
+      {confirmReturnOpen && (
+        <div
+          className="fixed inset-0 z-[10001] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => (!markingReturned ? setConfirmReturnOpen(false) : undefined)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-50">
+              <HelpCircle className="h-8 w-8 text-indigo-600" />
+            </div>
+            <p className="mb-1 text-base font-semibold text-slate-900">
+              Mark this item as returned?
+            </p>
+            <p className="mb-6 text-sm text-slate-500">
+              This can't be easily undone from here — it will show as Returned on
+              the dashboard and in the Tab app.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setConfirmReturnOpen(false)}
+                disabled={markingReturned}
+                className="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleMarkReturned}
+                disabled={markingReturned}
+                className="flex-1 rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {markingReturned ? "..." : "Yes, Returned"}
+              </button>
+            </div>
           </div>
         </div>
       )}

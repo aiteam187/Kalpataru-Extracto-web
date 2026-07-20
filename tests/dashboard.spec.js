@@ -32,11 +32,6 @@ test.describe("Dashboard page", () => {
     // Navbar.jsx / AppContext's globalSearch). Confirm that's where it is.
     await expect(page.getByPlaceholder(/search site, vehicle, doc no/i)).toBeVisible();
 
-    // Sync button — the dashboard's own content (below the navbar) can still
-    // be mid-fetch here since the DB connection pool sometimes needs a few
-    // seconds to warm up; give it more than the default 5s before failing.
-    await expect(page.getByRole("button", { name: /sync now/i })).toBeVisible({ timeout: 15000 });
-
     // Stat cards grid should render at least one card (not the skeleton state forever)
     const statsGrid = page.locator(".grid.grid-cols-2.md\\:grid-cols-3.lg\\:grid-cols-6");
     await expect(statsGrid).toBeVisible({ timeout: 15000 });

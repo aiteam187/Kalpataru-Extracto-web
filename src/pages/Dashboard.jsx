@@ -360,6 +360,7 @@ const Dashboard = () => {
             onBlockVendor={() => refresh({})}
             onUnblockVendor={() => refresh({})}
             onDeleteRecord={() => refresh({})}
+            onRecordUpdated={() => refresh({})}
             activeFilter={activeFilter}
             onClearFilter={() => setActiveFilter(null)}
           />

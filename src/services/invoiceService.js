@@ -255,6 +255,9 @@ const mapRecord = (r) => {
     vehicle_number: transporter.vehicle_number || resolveFromManualFields(r.manual_fields, ["vehicle", "truck", "car", "tempo"]) || "-",
     driver_name: transporter.driver_name || resolveFromManualFields(r.manual_fields, ["driver", "person"]) || "-",
     action_date: r.created_at,
+    // Only meaningful when direction === "returnable"; null/undefined otherwise.
+    return_status: r.return_status || null,
+    returned_at: r.returned_at || null,
     challan_image_url: r.challan_image_url,
     vehicle_front_url: r.vehicle_front_url,
     vehicle_back_url: r.vehicle_back_url,
@@ -355,6 +358,7 @@ class InvoiceService {
       if (data.document_type) body.document_type = data.document_type;
       if (data.extracted_data) body.extracted_data = data.extracted_data;
       if (data.manual_fields) body.manual_fields = data.manual_fields;
+      if (data.return_status) body.return_status = data.return_status;
 
       const response = await api.patch(`/history/${id}`, body);
       return response.data;
