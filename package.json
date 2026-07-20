@@ -20,6 +20,7 @@
     "xlsx": "npm:xlsx-js-style@^1.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@vitejs/plugin-react": "^5.1.1",
     "autoprefixer": "^10.5.2",
     "postcss": "^8.5.15",

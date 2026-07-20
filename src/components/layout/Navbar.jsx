@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../../context/AppContext";
 import authService from "../../services/authService";
-import { Menu, Bell, Power, AlertCircle } from "lucide-react";
+import { Menu, Bell, Power, AlertCircle, Search } from "lucide-react";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -14,6 +14,8 @@ const Navbar = () => {
     sidebarCollapsed,
     setSidebarCollapsed,
     showNotification,
+    globalSearch,
+    setGlobalSearch,
   } = useAppContext();
 
   const [sticky, setSticky] = useState(false);
@@ -137,6 +139,26 @@ const Navbar = () => {
           </div>
 
           <ul className="navbar-nav d-flex align-items-center flex-row list-unstyled mb-0">
+            {/* Global search — moved here from the Dashboard page header since
+                this project only has one real page today; keeping it in the
+                navbar means it's available regardless of which route renders. */}
+            <li className="relative d-none d-md-block mr-4" style={{ width: "260px" }}>
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                id="global-search"
+                type="text"
+                value={globalSearch}
+                onChange={(e) => setGlobalSearch(e.target.value)}
+                placeholder="Search site, vehicle, doc no..."
+                className="pl-10 pr-12 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none w-full"
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:block">
+                <kbd className="text-[10px] font-bold text-gray-400 bg-white border border-gray-200 px-1.5 py-0.5 rounded shadow-sm">
+                  ⌘K
+                </kbd>
+              </div>
+            </li>
+
             <li className="nav-item-bell mr-4">
               <Bell size={20} className="pointer-cursor text-gray-500" />
             </li>

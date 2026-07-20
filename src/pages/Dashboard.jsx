@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useLocation } from "react-router-dom";
 import DashboardStats from "../components/dashboard/DashboardStats";
 import DashboardTable from "../components/dashboard/DashboardTable";
 import DashboardEditModal from "../components/dashboard/DashboardEditModal";
@@ -7,23 +6,16 @@ import Loading from "../components/common/Loading";
 import useInvoiceData from "../hooks/useInvoiceData";
 import invoiceService from "../services/invoiceService";
 import { useAppContext } from "../context/AppContext";
-import { Search, RefreshCw, Building2 } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 const Dashboard = () => {
-  const { showNotification } = useAppContext();
-  const location = useLocation();
-  const [vendorSearch, setVendorSearch] = useState("");
+  const { showNotification, globalSearch } = useAppContext();
   const [activeFilter, setActiveFilter] = useState(null);
 
   const { stats, records, loading, error, refresh, silentPoll } = useInvoiceData({
     autoFetch: true,
     params: {},
   });
-
-  // Re-fetch whenever user navigates to /dashboard (e.g. after uploading)
-  useEffect(() => {
-    refresh({});
-  }, [location.pathname]);
 
   const [syncing, setSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState(null);
@@ -242,9 +234,9 @@ const Dashboard = () => {
     );
 
   // ── Search filter — covers project site, vehicle, doc number ──────────────
-  const searchFilteredRecords = vendorSearch
+  const searchFilteredRecords = globalSearch
     ? records.filter((r) => {
-        const q = vendorSearch.toLowerCase();
+        const q = globalSearch.toLowerCase();
         return (
           r.project_site?.toLowerCase().includes(q) || // ← project site
           r.destination_site?.toLowerCase().includes(q) || // ← destination
@@ -282,10 +274,26 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="animate-in fade-in duration-500 space-y-5">
-        {/* 1. Dashboard Controls */}
+      {/* Stats cards + table sit inside DashboardStats' p-6 / DashboardTable's
+          px-6 padding on top of Layout's content-wrapper 20px padding (44px
+          total from the content-wrapper's own left edge), while the Navbar's
+          content sits 24px inside ITS wrapper (measured via computed style —
+          the "px-3" class there is overridden to 24px by a global stylesheet,
+          not the Tailwind 12px it looks like at a glance). Net mismatch is
+          20px; pull this block left by that amount (keeping the right edge
+          put via the width bump) so the cards/table left edge lines up with
+          the Navbar's, without touching Navbar.jsx or Layout.jsx. */}
+      <div
+        className="animate-in fade-in duration-500 space-y-5"
+        style={{ marginLeft: "-20px", width: "calc(100% + 20px)" }}
+      >
+        {/* 1. Dashboard Controls — entire box commented out (title block, and
+            the Live Sync / Last Sync / Sync Now controls). The search box
+            that used to live in here was moved to the Navbar (this project
+            only has one real page today; see Navbar.jsx / AppContext's
+            globalSearch).
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-end gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600">
                 <Building2 size={20} />
@@ -301,27 +309,6 @@ const Dashboard = () => {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {/* Search — updated placeholder */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  id="global-search"
-                  type="text"
-                  value={vendorSearch}
-                  onChange={(e) => setVendorSearch(e.target.value)}
-                  placeholder="Search site, vehicle, doc no..."
-                  className="pl-10 pr-12 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none w-full md:w-[260px] transition-all"
-                />
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 hidden md:block">
-                  <kbd className="text-[10px] font-bold text-gray-400 bg-white border border-gray-200 px-1.5 py-0.5 rounded shadow-sm">
-                    ⌘K
-                  </kbd>
-                </div>
-              </div>
-
-              <div className="h-8 w-px bg-gray-200 mx-1 hidden lg:block" />
-
-              {/* Sync */}
               <div className="flex items-center gap-4 pl-2">
                 <div className="hidden sm:block text-right">
                   <div className="flex items-center gap-1.5 justify-end">
@@ -356,6 +343,7 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+        */}
 
         {/* 2. Stats Cards */}
         <DashboardStats stats={coloredStats} loading={loading} />

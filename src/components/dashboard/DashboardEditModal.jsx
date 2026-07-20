@@ -70,6 +70,162 @@ const FieldInput = ({ fieldKey, value, onChange }) => {
   );
 };
 
+// ── Recursively renders every field in a plain object — primitives as inputs,
+// nested objects as nested boxes, arrays via GenericArrayEditor — so that no
+// field is silently dropped from the edit form the way the old leaf-only
+// filter used to (it only rendered `typeof v !== "object"` entries, which
+// meant any nested sub-object, or an array nested inside a section, never
+// got an editable input at all). `onChange(key, newValue)` replaces a single
+// top-level key of `data`.
+const isPlainObject = (v) =>
+  v !== null && typeof v === "object" && !Array.isArray(v);
+
+const GenericArrayEditor = ({ data, onChange }) => {
+  const isObjectArray = data.length > 0 && isPlainObject(data[0]);
+
+  if (isObjectArray) {
+    const columns = Array.from(
+      new Set(data.flatMap((row) => Object.keys(row || {}))),
+    );
+    const updateCell = (idx, key, val) =>
+      onChange(data.map((row, i) => (i === idx ? { ...row, [key]: val } : row)));
+    const addRow = () =>
+      onChange([...data, Object.fromEntries(columns.map((c) => [c, null]))]);
+    const removeRow = (idx) => onChange(data.filter((_, i) => i !== idx));
+
+    return (
+      <div>
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                {columns.map((c) => (
+                  <th
+                    key={c}
+                    className="px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wide whitespace-nowrap"
+                  >
+                    {fmt(c)}
+                  </th>
+                ))}
+                <th className="px-3 py-2 w-10" />
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((row, idx) => (
+                <tr
+                  key={idx}
+                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60"
+                >
+                  {columns.map((c) => (
+                    <td key={c} className="px-2 py-1.5 align-middle">
+                      <input
+                        type="text"
+                        value={row?.[c] === null || row?.[c] === undefined ? "" : String(row[c])}
+                        onChange={(e) => updateCell(idx, c, e.target.value || null)}
+                        className="w-full px-2.5 py-1.5 border border-slate-200 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+                        placeholder="—"
+                      />
+                    </td>
+                  ))}
+                  <td className="px-2 py-1.5 align-middle text-center">
+                    <button
+                      type="button"
+                      onClick={() => removeRow(idx)}
+                      className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                      title="Remove row"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <button
+          type="button"
+          onClick={addRow}
+          className="mt-3 flex items-center gap-2 px-3 py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg border border-dashed border-indigo-300 w-full justify-center transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" /> Add Row
+        </button>
+      </div>
+    );
+  }
+
+  const updateItem = (idx, val) =>
+    onChange(data.map((it, i) => (i === idx ? val : it)));
+  const addItem = () => onChange([...data, ""]);
+  const removeItem = (idx) => onChange(data.filter((_, i) => i !== idx));
+
+  return (
+    <div className="space-y-2">
+      {data.map((item, idx) => (
+        <div key={idx} className="flex items-center gap-2">
+          <input
+            type="text"
+            value={item === null || item === undefined ? "" : String(item)}
+            onChange={(e) => updateItem(idx, e.target.value)}
+            className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400"
+            placeholder="—"
+          />
+          <button
+            type="button"
+            onClick={() => removeItem(idx)}
+            className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+            title="Remove item"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addItem}
+        className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg border border-dashed border-indigo-300 w-full justify-center transition-colors"
+      >
+        <Plus className="w-3.5 h-3.5" /> Add Item
+      </button>
+    </div>
+  );
+};
+
+const FieldsEditor = ({ data, onChange }) => (
+  <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+    {Object.entries(data).map(([key, val]) => {
+      if (Array.isArray(val)) {
+        return (
+          <div key={key} className="col-span-full">
+            <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1">
+              {fmt(key)}
+            </label>
+            <GenericArrayEditor data={val} onChange={(next) => onChange(key, next)} />
+          </div>
+        );
+      }
+      if (isPlainObject(val)) {
+        return (
+          <div
+            key={key}
+            className="col-span-full border border-slate-200 rounded-lg p-3 bg-slate-50/50"
+          >
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2">
+              {fmt(key)}
+            </p>
+            <FieldsEditor
+              data={val}
+              onChange={(subKey, subVal) =>
+                onChange(key, { ...val, [subKey]: subVal })
+              }
+            />
+          </div>
+        );
+      }
+      return <FieldInput key={key} fieldKey={key} value={val} onChange={onChange} />;
+    })}
+  </div>
+);
+
 // ── Object section editor ─────────────────────────────────────────────────────
 const SectionEditor = ({ sectionKey, data, onChange }) => {
   const [open, setOpen] = useState(true);
@@ -78,11 +234,7 @@ const SectionEditor = ({ sectionKey, data, onChange }) => {
   const handleField = (key, val) =>
     onChange(sectionKey, { ...data, [key]: val });
 
-  const leafEntries = Object.entries(data).filter(
-    ([, v]) => typeof v !== "object" || v === null,
-  );
-
-  if (leafEntries.length === 0) return null;
+  if (Object.keys(data).length === 0) return null;
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
@@ -100,50 +252,21 @@ const SectionEditor = ({ sectionKey, data, onChange }) => {
           <ChevronRight className="w-4 h-4 text-slate-400" />
         )}
       </button>
-      {open && (
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {leafEntries.map(([key, val]) => (
-            <FieldInput
-              key={key}
-              fieldKey={key}
-              value={val}
-              onChange={handleField}
-            />
-          ))}
-        </div>
-      )}
+      {open && <FieldsEditor data={data} onChange={handleField} />}
     </div>
   );
 };
 
-// ── Array section editor (table layout for items) ─────────────────────────────
-const ITEM_COLUMNS = [
-  { key: "sr_no", label: "SR NO", width: "w-14" },
-  { key: "description", label: "Description", width: "w-full" },
-  { key: "quantity", label: "Quantity", width: "w-24" },
-  { key: "unit", label: "Unit", width: "w-20" },
-];
-
+// ── Array section editor (table layout, columns resolved dynamically) ─────────
+// Previously this used a hardcoded column set (sr_no/description/quantity/unit)
+// meant for an "items" list. Any other top-level array field — e.g. a
+// `signatures` array shaped like [{ sign: "..." }] — has none of those keys,
+// so every cell rendered blank even though the view modal displays it fine
+// (it derives columns from whatever keys are actually present). Reusing
+// GenericArrayEditor here fixes that: columns always match the real data.
 const ArraySectionEditor = ({ sectionKey, data, onChange }) => {
   const [open, setOpen] = useState(true);
   if (!Array.isArray(data)) return null;
-
-  const handleItem = (idx, key, val) =>
-    onChange(
-      sectionKey,
-      data.map((item, i) => (i === idx ? { ...item, [key]: val } : item)),
-    );
-
-  const addRow = () => {
-    const template = Object.fromEntries(ITEM_COLUMNS.map((c) => [c.key, null]));
-    onChange(sectionKey, [...data, template]);
-  };
-
-  const removeRow = (idx) =>
-    onChange(
-      sectionKey,
-      data.filter((_, i) => i !== idx),
-    );
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
@@ -167,95 +290,22 @@ const ArraySectionEditor = ({ sectionKey, data, onChange }) => {
 
       {open && (
         <div className="p-4">
-          <div className="overflow-x-auto rounded-lg border border-slate-200">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  {ITEM_COLUMNS.map((col) => (
-                    <th
-                      key={col.key}
-                      className={`px-3 py-2 text-left text-[10px] font-bold text-slate-400 uppercase tracking-wide whitespace-nowrap ${
-                        col.key === "description" ? "w-full" : col.width
-                      }`}
-                    >
-                      {col.label}
-                    </th>
-                  ))}
-                  {/* Remove column */}
-                  <th className="px-3 py-2 w-10" />
-                </tr>
-              </thead>
-
-              <tbody>
-                {data.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={ITEM_COLUMNS.length + 1}
-                      className="px-3 py-6 text-center text-sm text-slate-400"
-                    >
-                      No rows yet.
-                    </td>
-                  </tr>
-                ) : (
-                  data.map((item, idx) => (
-                    <tr
-                      key={idx}
-                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60 transition-colors"
-                    >
-                      {ITEM_COLUMNS.map((col) => {
-                        const val = item?.[col.key];
-                        return (
-                          <td
-                            key={col.key}
-                            className={`px-2 py-1.5 align-middle ${
-                              col.key === "description" ? "w-full" : col.width
-                            }`}
-                          >
-                            <input
-                              type="text"
-                              value={
-                                val === null || val === undefined
-                                  ? ""
-                                  : String(val)
-                              }
-                              onChange={(e) =>
-                                handleItem(idx, col.key, e.target.value || null)
-                              }
-                              className={`px-2.5 py-1.5 border border-slate-200 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400/30 focus:border-indigo-400 transition-all placeholder:text-slate-300 ${
-                                col.key === "description"
-                                  ? "w-full"
-                                  : "w-full min-w-[60px]"
-                              }`}
-                              placeholder="—"
-                            />
-                          </td>
-                        );
-                      })}
-
-                      <td className="px-2 py-1.5 align-middle text-center">
-                        <button
-                          type="button"
-                          onClick={() => removeRow(idx)}
-                          className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
-                          title="Remove row"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          <button
-            type="button"
-            onClick={addRow}
-            className="mt-3 flex items-center gap-2 px-3 py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg border border-dashed border-indigo-300 w-full justify-center transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" /> Add Row
-          </button>
+          {data.length === 0 ? (
+            <p className="px-3 py-6 text-center text-sm text-slate-400 border border-slate-200 rounded-lg">
+              No rows yet.
+            </p>
+          ) : (
+            <GenericArrayEditor data={data} onChange={(next) => onChange(sectionKey, next)} />
+          )}
+          {data.length === 0 && (
+            <button
+              type="button"
+              onClick={() => onChange(sectionKey, [...data, {}])}
+              className="mt-3 flex items-center gap-2 px-3 py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 rounded-lg border border-dashed border-indigo-300 w-full justify-center transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" /> Add Row
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -433,6 +483,22 @@ const DashboardEditModal = ({ isOpen, onClose, record, onSave }) => {
   const extraKeys = Object.keys(extracted).filter((k) => !knownSet.has(k));
   const orderedKeys = [...SECTION_ORDER, ...extraKeys];
 
+  // Some extraction runs ("new universal prompt outputs" — see invoiceService.js
+  // resolveVendorName) put fields like supplier_name / vendor_name directly on
+  // extracted_data instead of nesting them under a section object. The section
+  // loop below only renders array/object values, so these flat fields used to
+  // be completely invisible in the edit form — not just non-editable, absent —
+  // even though the view modal already surfaces them under "Document Details".
+  const flatTopLevelKeys = orderedKeys.filter((key) => {
+    const val = extracted[key];
+    return val !== undefined && (typeof val !== "object" || val === null);
+  });
+  const flatTopLevelData = Object.fromEntries(
+    flatTopLevelKeys.map((k) => [k, extracted[k]]),
+  );
+  const handleFlatTopLevel = (key, val) =>
+    setExtracted((prev) => ({ ...prev, [key]: val }));
+
   const docTypeDisplay = (documentType || "-").toUpperCase();
 
   return createPortal(
@@ -515,10 +581,24 @@ const DashboardEditModal = ({ isOpen, onClose, record, onSave }) => {
                 </div>
               </div>
 
+              {/* ── Flat fields living directly on extracted_data (not nested
+                  in a section) — e.g. supplier_name, vendor_name from newer
+                  extraction runs. Without this block they were never shown. ── */}
+              {flatTopLevelKeys.length > 0 && (
+                <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+                  <div className="px-4 py-3 bg-slate-50">
+                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+                      Document Details
+                    </span>
+                  </div>
+                  <FieldsEditor data={flatTopLevelData} onChange={handleFlatTopLevel} />
+                </div>
+              )}
+
               {/* ── Extracted data in document order ── */}
               {orderedKeys.map((key) => {
                 const val = extracted[key];
-                if (val === undefined) return null;
+                if (val === undefined || flatTopLevelKeys.includes(key)) return null;
                 return Array.isArray(val) ? (
                   <ArraySectionEditor
                     key={key}

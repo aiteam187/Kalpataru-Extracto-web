@@ -34,6 +34,13 @@ export const AppProvider = ({ children }) => {
     return saved || DEFAULT_WAREHOUSE;
   });
 
+  // --- Global Search State ---
+  // Lives here (not in Dashboard.jsx) because the search box now renders in
+  // the Navbar, which is shared layout above the page content. With only one
+  // real page (Dashboard) today, this is simpler than prop-drilling through
+  // Layout — revisit if/when more pages need their own search behavior.
+  const [globalSearch, setGlobalSearch] = useState("");
+
   // --- UI States ---
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [currentInvoiceId, setCurrentInvoiceId] = useState(null);
@@ -135,6 +142,8 @@ export const AppProvider = ({ children }) => {
   const value = {
     user,
     setUser,
+    globalSearch,
+    setGlobalSearch,
     sidebarCollapsed,
     setSidebarCollapsed,
     toggleSidebar,

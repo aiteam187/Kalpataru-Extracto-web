@@ -25,10 +25,22 @@ const useInvoiceData = (options = {}) => {
     paramsRef.current = params;
   }, [params]);
 
+  // Prevents overlapping fetchAllData calls from racing each other. This
+  // replaced an earlier "latest requestId wins" approach: with React
+  // StrictMode double-invoking the mount effect, two calls start almost
+  // simultaneously, and whichever's `finally` block loses the requestId
+  // comparison never clears `loading` — sometimes leaving BOTH calls stuck
+  // (each started after the other, so neither is ever "latest" by the time
+  // its own finally runs), permanently stuck on the loading spinner. Simplest
+  // fix: don't let a second call start at all while one is already in flight.
+  const isFetchingRef = useRef(false);
+
   /**
    * Fetch all data (stats + records)
    */
   const fetchAllData = useCallback(async (fetchParams) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     try {
       setLoading(true);
       setError(null);
@@ -62,6 +74,7 @@ const useInvoiceData = (options = {}) => {
       console.error("❌ Error fetching data:", err);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, []);
 

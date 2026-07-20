@@ -975,7 +975,18 @@ const DashboardTable = ({
             {["automatic", "manual"].map((t) => (
               <button
                 key={t}
-                onClick={() => setEntryTypeTab(t)}
+                onClick={() => {
+                  // The parent's stat-card filter (activeFilter) already narrows
+                  // `records` down to one entry_type before it reaches this table.
+                  // Switching this tab to the *other* entry_type on top of that
+                  // narrowed list always yields zero rows, so clear the stat-card
+                  // filter whenever it conflicts with the tab the user just picked.
+                  const conflictsWithActiveFilter =
+                    (t === "manual" && activeFilter && activeFilter !== "manual") ||
+                    (t === "automatic" && activeFilter === "manual");
+                  if (conflictsWithActiveFilter && onClearFilter) onClearFilter();
+                  setEntryTypeTab(t);
+                }}
                 className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
                   entryTypeTab === t
                     ? "bg-teal-600 text-white"
