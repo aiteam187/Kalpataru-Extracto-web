@@ -12,13 +12,36 @@ const resolveFromManualFields = (fields, possibleKeys) => {
   return null;
 };
 
+// ── Helper: reject printed form-label artifacts the LLM sometimes echoes
+// back as if they were the filled-in value (e.g. a blank "M/s. ______" line
+// on a handwritten gate pass extracted as name: "M/s." because nothing was
+// actually written there). Any candidate matching one of these, once
+// trimmed/lowercased, is treated the same as if the field were empty — the
+// caller should fall through to the next candidate, not display it.
+const JUNK_VALUES = new Set([
+  "m/s", "m/s.", "m / s", "of m/s", "of m/s.",
+  "shri", "please allow", "please allow shri",
+  "name", "signature", "to", "from", "the security",
+  "n/a", "na", "nil", "none", "null", "-", "--", "",
+]);
+
+const isJunkValue = (value) => {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim().toLowerCase().replace(/\.+$/, "");
+  return JUNK_VALUES.has(normalized) || JUNK_VALUES.has(value.trim().toLowerCase());
+};
+
+// Pick the first candidate that's a real (non-empty, non-label-artifact) string.
+const firstValid = (...candidates) =>
+  candidates.find((v) => typeof v === "string" && v.trim() && !isJunkValue(v));
+
 // ── Helper: pull a company/vendor name from any structure Groq might return ─
 const resolveVendorName = (extracted_data, manual_fields) => {
   if (manual_fields) {
     const manualVal = resolveFromManualFields(manual_fields, [
       "vendor", "supplier", "company", "party", "from", "issuer"
     ]);
-    if (manualVal) return manualVal;
+    if (manualVal && !isJunkValue(manualVal)) return manualVal;
   }
   if (!extracted_data) return "-";
 
@@ -28,41 +51,38 @@ const resolveVendorName = (extracted_data, manual_fields) => {
   const issuer = extracted_data.issuer_details || extracted_data.seller || extracted_data.from_party ||
     (typeof extracted_data.issuer === "object" ? extracted_data.issuer : null) || {};
   const meta = extracted_data.document_metadata || {};
-  const transporter = extracted_data.transporter_details || {};
   const src = extracted_data.source_destination || {};
 
-  const resolved =
-    // Flat top-level (new universal prompt outputs)
-    extracted_data.supplier_name ||
-    extracted_data.vendor_name ||
-    extracted_data.company_name ||
-    extracted_data.party_name ||
-    (typeof extracted_data.issuer === "string" ? extracted_data.issuer : null) ||
-    // Nested issuer block (old or new)
-    issuer.company_name_printed_on_the_letterhead ||
-    issuer.company_name ||
-    issuer.name ||
-    issuer.vendor_name ||
-    issuer.party_name ||
-    issuer.issued_by ||
-    issuer.issued_to ||
-    issuer.supplier_name ||
-    issuer.consignor ||
-    issuer.consignee ||
-    issuer.firm_name ||
-    issuer.organisation_name ||
-    issuer.organization_name ||
-    meta.issuer ||
-    meta.vendor_name ||
-    meta.company_name ||
-    meta.party_name ||
-    meta.supplier_name ||
-    src.source_site ||
-    "-";
-
-  // Final safety net — a table cell must never receive a raw object,
-  // regardless of what shape a future document's extracted_data takes.
-  return typeof resolved === "string" ? resolved : "-";
+  return (
+    firstValid(
+      // Flat top-level (new universal prompt outputs)
+      extracted_data.supplier_name,
+      extracted_data.vendor_name,
+      extracted_data.company_name,
+      extracted_data.party_name,
+      typeof extracted_data.issuer === "string" ? extracted_data.issuer : null,
+      // Nested issuer block (old or new)
+      issuer.company_name_printed_on_the_letterhead,
+      issuer.company_name,
+      issuer.name,
+      issuer.vendor_name,
+      issuer.party_name,
+      issuer.issued_by,
+      issuer.issued_to,
+      issuer.supplier_name,
+      issuer.consignor,
+      issuer.consignee,
+      issuer.firm_name,
+      issuer.organisation_name,
+      issuer.organization_name,
+      meta.issuer,
+      meta.vendor_name,
+      meta.company_name,
+      meta.party_name,
+      meta.supplier_name,
+      src.source_site,
+    ) || "-"
+  );
 };
 
 // ── Helper: pull document / invoice number ────────────────────────────────────
@@ -129,7 +149,7 @@ const resolveAmount = (extracted_data, manual_fields) => {
 // Also guards against a non-string value (e.g. a nested object) ever
 // reaching a table cell, which would crash the render.
 const normalizeProjectSite = (site) => {
-  if (typeof site !== "string" || !site) return "-";
+  if (typeof site !== "string" || !site || isJunkValue(site)) return "-";
   return site.trim().toUpperCase() === "HO" ? "Kalpataru Pvt Ltd" : site;
 };
 
@@ -139,7 +159,7 @@ const resolveProjectSite = (extracted_data, manual_fields) => {
     const manualVal = resolveFromManualFields(manual_fields, [
       "project", "site", "project site", "location", "where"
     ]);
-    if (manualVal) return normalizeProjectSite(manualVal);
+    if (manualVal && !isJunkValue(manualVal)) return normalizeProjectSite(manualVal);
   }
   if (!extracted_data) return "-";
 
@@ -147,11 +167,7 @@ const resolveProjectSite = (extracted_data, manual_fields) => {
   const src = extracted_data.source_destination || {};
 
   return normalizeProjectSite(
-    meta.project_site ||
-    src.source_site ||
-    meta.site ||
-    extracted_data.project_site ||
-    "-"
+    firstValid(meta.project_site, src.source_site, meta.site, extracted_data.project_site)
   );
 };
 
