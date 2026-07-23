@@ -530,6 +530,7 @@ const DashboardTable = ({
   showNotification,
   activeFilter,
   onClearFilter,
+  loading = false,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [localRecords, setLocalRecords] = useState(records);
@@ -1041,6 +1042,7 @@ const DashboardTable = ({
       >
         <DataTable
           data={paginatedRecords}
+          loading={loading}
           visibleColumns={visibleColumns}
           simple={entryTypeTab === "manual"}
           srStart={totalItems - startIndex}

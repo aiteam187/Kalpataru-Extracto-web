@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import DashboardStats from "../components/dashboard/DashboardStats";
 import DashboardTable from "../components/dashboard/DashboardTable";
 import DashboardEditModal from "../components/dashboard/DashboardEditModal";
-import Loading from "../components/common/Loading";
 import useInvoiceData from "../hooks/useInvoiceData";
 import invoiceService from "../services/invoiceService";
 import { useAppContext } from "../context/AppContext";
@@ -207,13 +206,6 @@ const Dashboard = () => {
     [refresh],
   );
 
-  if (loading)
-    return (
-      <div className="h-[60vh] flex items-center justify-center">
-        <Loading size="lg" />
-      </div>
-    );
-
   if (error)
     return (
       <div className="flex flex-col items-center justify-center p-12 bg-white rounded-2xl border border-gray-100 shadow-sm mt-10">
@@ -355,6 +347,7 @@ const Dashboard = () => {
         >
           <DashboardTable
             records={filteredRecords}
+            loading={loading}
             showNotification={showNotification}
             onEditRecord={handleEditRecord}
             onBlockVendor={() => refresh({})}

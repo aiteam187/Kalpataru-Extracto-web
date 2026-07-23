@@ -16,6 +16,7 @@ const DataTable = ({
   visibleColumns = {},
   simple = false,
   srStart,
+  loading = false,
 }) => {
   const defaultVisibleColumns = {
     id: true,
@@ -144,6 +145,53 @@ const DataTable = ({
     );
   };
 
+  // Build headers
+  const headers = [];
+  if (columns.id) headers.push("SR#");
+  if (columns.project_site) headers.push("PROJECT SITE"); // ← was ISSUER
+  if (columns.vendor_name) headers.push("VENDOR NAME");
+  if (columns.destination_site) headers.push("DESTINATION"); // ← new
+  if (columns.invoice_number) headers.push("DOCUMENT NO.");
+  if (columns.invoice_date) headers.push("DATE");
+  if (columns.invoice_time) headers.push("TIME");
+  if (columns.vehicle_number) headers.push("VEHICLE NO.");
+  if (columns.approval_status) headers.push("STATUS");
+  if (columns.inward_outward) headers.push("DIRECTION");
+  if (columns.document_type) headers.push("DOC TYPE");
+  headers.push(""); // actions
+
+  if (loading && (!data || data.length === 0)) {
+    return (
+      <div className="w-full h-full overflow-x-auto">
+        <table className="w-full min-w-[900px] text-left border-collapse">
+          <thead className="sticky top-0 z-10 bg-gradient-to-r from-slate-700 to-slate-800">
+            <tr className="border-b-2 border-slate-900 shadow-md">
+              {headers.map((header, i) => (
+                <th
+                  key={i}
+                  className="px-6 py-4 text-xs font-bold text-white uppercase tracking-wider"
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {[...Array(10)].map((_, rowIdx) => (
+              <tr key={rowIdx} className={rowIdx % 2 === 0 ? "bg-white" : "bg-slate-50/30"}>
+                {headers.map((_, colIdx) => (
+                  <td key={colIdx} className="px-6 py-5">
+                    <div className="h-4 bg-slate-100 rounded animate-pulse" style={{ width: colIdx === headers.length - 1 ? "24px" : "70%" }} />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+
   if (!data || data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-slate-400">
@@ -171,21 +219,6 @@ const DataTable = ({
       </div>
     );
   }
-
-  // Build headers
-  const headers = [];
-  if (columns.id) headers.push("SR#");
-  if (columns.project_site) headers.push("PROJECT SITE"); // ← was ISSUER
-  if (columns.vendor_name) headers.push("VENDOR NAME");
-  if (columns.destination_site) headers.push("DESTINATION"); // ← new
-  if (columns.invoice_number) headers.push("DOCUMENT NO.");
-  if (columns.invoice_date) headers.push("DATE");
-  if (columns.invoice_time) headers.push("TIME");
-  if (columns.vehicle_number) headers.push("VEHICLE NO.");
-  if (columns.approval_status) headers.push("STATUS");
-  if (columns.inward_outward) headers.push("DIRECTION");
-  if (columns.document_type) headers.push("DOC TYPE");
-  headers.push(""); // actions
 
   return (
     <div className="w-full h-full overflow-x-auto">
