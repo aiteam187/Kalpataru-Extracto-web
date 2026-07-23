@@ -47,10 +47,7 @@ const useInvoiceData = (options = {}) => {
       const actualParams = fetchParams || paramsRef.current;
       console.log("🔄 fetchAllData called with params:", actualParams);
 
-      const [statsData, recordsData] = await Promise.all([
-        invoiceService.getDashboardStats(actualParams),
-        invoiceService.getRecords(actualParams),
-      ]);
+      const { stats: statsData, records: recordsData } = await invoiceService.getDashboardData(actualParams);
 
       setStats(statsData);
       console.log("✅ Stats set:", statsData?.length);
@@ -145,10 +142,7 @@ const useInvoiceData = (options = {}) => {
   // Silent background poll — no loading spinner
   const silentPoll = useCallback(async () => {
     try {
-      const [statsData, recordsData] = await Promise.all([
-        invoiceService.getDashboardStats(paramsRef.current),
-        invoiceService.getRecords(paramsRef.current),
-      ]);
+      const { stats: statsData, records: recordsData } = await invoiceService.getDashboardData(paramsRef.current);
       setStats(statsData);
       if (recordsData.data) {
         setRecords(recordsData.data);

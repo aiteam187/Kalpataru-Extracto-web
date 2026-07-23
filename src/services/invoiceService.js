@@ -341,6 +341,23 @@ class InvoiceService {
     }
   }
 
+  // Stats and the record list are both derived from the same full-table
+  // fetch (see _fetchHistory) — calling getDashboardStats and getRecords
+  // separately hits /history/all twice per dashboard load/poll, doubling
+  // an already-expensive unbounded query. This fetches once and derives both.
+  async getDashboardData(params = {}) {
+    try {
+      const records = await this._fetchHistory(params);
+      return {
+        stats: calculateStats(records),
+        records: { data: records, total: records.length, page: 1, totalPages: 1 },
+      };
+    } catch (error) {
+      console.error("❌ Error fetching dashboard data:", error);
+      throw error;
+    }
+  }
+
   async getRecordById(id) {
     try {
       const response = await api.get(`/history/${id}`);
