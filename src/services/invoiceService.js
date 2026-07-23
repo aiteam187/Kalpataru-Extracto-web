@@ -304,6 +304,16 @@ const calculateStats = (records) => {
   ];
 };
 
+// Maps the /history/stats aggregate response into the same shape calculateStats produces.
+const statsFromCounts = (counts) => [
+  { label: "Total Records", value: String(counts.total ?? 0) },
+  { label: "Inward", value: String(counts.inward ?? 0) },
+  { label: "Outward", value: String(counts.outward ?? 0) },
+  { label: "Returnable", value: String(counts.returnable ?? 0) },
+  { label: "Manual", value: String(counts.manual ?? 0) },
+  { label: "Today", value: String(counts.today ?? 0) },
+];
+
 // ─── Service class ───────────────────────────────────────────────────────────
 class InvoiceService {
   async _fetchHistory(params = {}) {
@@ -321,13 +331,13 @@ class InvoiceService {
     return (response.data.records || []).map(mapRecord);
   }
 
-  async getDashboardStats(params = {}) {
+  async getDashboardStats() {
     try {
-      const records = await this._fetchHistory(params);
-      return calculateStats(records);
+      const response = await api.get("/history/stats");
+      return statsFromCounts(response.data);
     } catch (error) {
       console.error("❌ Error fetching stats:", error);
-      return calculateStats([]);
+      return statsFromCounts({});
     }
   }
 
@@ -341,17 +351,17 @@ class InvoiceService {
     }
   }
 
-  // Stats and the record list are both derived from the same full-table
-  // fetch (see _fetchHistory) — calling getDashboardStats and getRecords
-  // separately hits /history/all twice per dashboard load/poll, doubling
-  // an already-expensive unbounded query. This fetches once and derives both.
+  // /history/stats is a cheap SQL aggregate (no row fetch, no JSON parsing,
+  // no URL signing) so it stays fast regardless of table size — fetching it
+  // alongside the record list (still needed for the table itself) no longer
+  // doubles the expensive /history/all call the way getDashboardStats did.
   async getDashboardData(params = {}) {
     try {
-      const records = await this._fetchHistory(params);
-      return {
-        stats: calculateStats(records),
-        records: { data: records, total: records.length, page: 1, totalPages: 1 },
-      };
+      const [stats, records] = await Promise.all([
+        this.getDashboardStats(),
+        this.getRecords(params),
+      ]);
+      return { stats, records };
     } catch (error) {
       console.error("❌ Error fetching dashboard data:", error);
       throw error;
