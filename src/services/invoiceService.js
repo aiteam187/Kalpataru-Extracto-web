@@ -316,18 +316,16 @@ const statsFromCounts = (counts) => [
 
 // ─── Service class ───────────────────────────────────────────────────────────
 class InvoiceService {
+  // Caps the table to the 500 most recent records instead of fetching the
+  // entire table (/history/all) — that scaled linearly with total record
+  // count and got slower (and heavier) as data grew. "Total Records" and
+  // the other stat cards are unaffected: they come from /history/stats,
+  // a SQL aggregate over the whole table, not from this capped list.
   async _fetchHistory(params = {}) {
-    const query = {};
+    const query = { limit: 500, offset: 0 };
     if (params.direction) query.direction = params.direction;
 
-    // /history defaults to limit=50 server-side — past 50 total records,
-    // that silently truncated both the stats and the whole table to only
-    // the most recent 50, so "Total Records" (and the table itself) froze
-    // in place while new records kept being added underneath. /history/all
-    // returns the complete dataset; the dashboard already paginates the
-    // result client-side, so this is a straight correctness fix, not a
-    // behavior change.
-    const response = await api.get("/history/all", { params: query });
+    const response = await api.get("/history", { params: query });
     return (response.data.records || []).map(mapRecord);
   }
 
