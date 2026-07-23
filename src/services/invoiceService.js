@@ -322,7 +322,10 @@ class InvoiceService {
   // the other stat cards are unaffected: they come from /history/stats,
   // a SQL aggregate over the whole table, not from this capped list.
   async _fetchHistory(params = {}) {
-    const query = { limit: 500, offset: 0 };
+    // include_urls=false skips server-side SAS-signing of image URLs for
+    // every row — the table never shows images, and the view/edit modals
+    // refetch the single record by id (which still returns signed URLs).
+    const query = { limit: 500, offset: 0, include_urls: false };
     if (params.direction) query.direction = params.direction;
 
     const response = await api.get("/history", { params: query });
@@ -345,23 +348,6 @@ class InvoiceService {
       return { data: records, total: records.length, page: 1, totalPages: 1 };
     } catch (error) {
       console.error("❌ Error fetching records:", error);
-      throw error;
-    }
-  }
-
-  // /history/stats is a cheap SQL aggregate (no row fetch, no JSON parsing,
-  // no URL signing) so it stays fast regardless of table size — fetching it
-  // alongside the record list (still needed for the table itself) no longer
-  // doubles the expensive /history/all call the way getDashboardStats did.
-  async getDashboardData(params = {}) {
-    try {
-      const [stats, records] = await Promise.all([
-        this.getDashboardStats(),
-        this.getRecords(params),
-      ]);
-      return { stats, records };
-    } catch (error) {
-      console.error("❌ Error fetching dashboard data:", error);
       throw error;
     }
   }

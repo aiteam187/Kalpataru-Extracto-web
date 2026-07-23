@@ -47,23 +47,28 @@ const useInvoiceData = (options = {}) => {
       const actualParams = fetchParams || paramsRef.current;
       console.log("🔄 fetchAllData called with params:", actualParams);
 
-      const { stats: statsData, records: recordsData } = await invoiceService.getDashboardData(actualParams);
-
-      setStats(statsData);
-      console.log("✅ Stats set:", statsData?.length);
-
-      if (recordsData.data) {
-        setRecords(recordsData.data);
-        setPagination({
-          page: recordsData.page || 1,
-          totalPages: recordsData.totalPages || 1,
-          total: recordsData.total || 0,
-        });
-        console.log("✅ Records set:", recordsData.data?.length);
-      } else {
-        setRecords(recordsData);
-        console.log("✅ Records set (direct):", recordsData?.length);
-      }
+      // Render each piece as soon as its own fetch resolves — /history/stats
+      // returns in ~1s while the record list takes several seconds, so
+      // awaiting both together made the stat cards wait on the slow call.
+      const statsPromise = invoiceService.getDashboardStats().then((statsData) => {
+        setStats(statsData);
+        console.log("✅ Stats set:", statsData?.length);
+      });
+      const recordsPromise = invoiceService.getRecords(actualParams).then((recordsData) => {
+        if (recordsData.data) {
+          setRecords(recordsData.data);
+          setPagination({
+            page: recordsData.page || 1,
+            totalPages: recordsData.totalPages || 1,
+            total: recordsData.total || 0,
+          });
+          console.log("✅ Records set:", recordsData.data?.length);
+        } else {
+          setRecords(recordsData);
+          console.log("✅ Records set (direct):", recordsData?.length);
+        }
+      });
+      await Promise.all([statsPromise, recordsPromise]);
 
       console.log("✅ fetchAllData completed");
     } catch (err) {
@@ -142,7 +147,10 @@ const useInvoiceData = (options = {}) => {
   // Silent background poll — no loading spinner
   const silentPoll = useCallback(async () => {
     try {
-      const { stats: statsData, records: recordsData } = await invoiceService.getDashboardData(paramsRef.current);
+      const [statsData, recordsData] = await Promise.all([
+        invoiceService.getDashboardStats(),
+        invoiceService.getRecords(paramsRef.current),
+      ]);
       setStats(statsData);
       if (recordsData.data) {
         setRecords(recordsData.data);
