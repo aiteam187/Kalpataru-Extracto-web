@@ -11,6 +11,19 @@ async function login(page) {
   await page.getByRole("button", { name: /proceed/i }).click();
 }
 
+// Waits for a row with real cell content, not just "tbody tr" visibility —
+// that selector also matches the table's own loading-skeleton rows (blank
+// pulsing placeholders), and checking "no .animate-pulse present" is prone
+// to a false pass in the narrow window right after navigation, before the
+// fetch's setLoading(true) has even fired yet (initial loading state is
+// false). Asserting on non-empty cell text has no such ambiguous window —
+// it can only pass once a genuine record has rendered.
+async function firstRealRow(page) {
+  const row = page.locator(".data-status-section table tbody tr").first();
+  await expect(row.locator("td").first()).not.toBeEmpty({ timeout: 15000 });
+  return row;
+}
+
 test.describe("Dashboard page", () => {
   test("loads successfully at the correct URL", async ({ page }) => {
     await login(page);
@@ -95,5 +108,47 @@ test.describe("Dashboard page", () => {
     await expect(page.getByText("Filter: Manual")).toHaveCount(0);
     const tableRows = page.locator(".data-status-section table tbody tr");
     await expect(tableRows.first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test("clicking a row opens the view modal with record details", async ({ page }) => {
+    await login(page);
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page.locator(".h-\\[60vh\\]")).toBeHidden({ timeout: 15000 });
+
+    const firstRow = await firstRealRow(page);
+    // Click the SR# cell specifically — the row's own onClick opens the view
+    // modal, but a naive click on the <tr> lands wherever its center happens
+    // to be, which can hit the STATUS pill or Action cell (both stop
+    // propagation to handle their own click instead).
+    await firstRow.locator("td").first().click();
+
+    await expect(page.getByText("Record Details")).toBeVisible();
+    // Modal fetches the single record by id — must resolve out of its own
+    // loading state (this is the endpoint that still SAS-signs image URLs,
+    // unlike the list view which now skips that).
+    await expect(page.getByText("Loading...")).toBeHidden({ timeout: 10000 });
+
+    // Close it back out.
+    await page.locator('button:has(svg.lucide-x)').first().click();
+    await expect(page.getByText("Record Details")).toBeHidden();
+  });
+
+  test("edit modal opens from the view modal and shows editable fields", async ({ page }) => {
+    await login(page);
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 });
+    await expect(page.locator(".h-\\[60vh\\]")).toBeHidden({ timeout: 15000 });
+
+    const firstRow = await firstRealRow(page);
+    // Click the SR# cell specifically — the row's own onClick opens the view
+    // modal, but a naive click on the <tr> lands wherever its center happens
+    // to be, which can hit the STATUS pill or Action cell (both stop
+    // propagation to handle their own click instead).
+    await firstRow.locator("td").first().click();
+    await expect(page.getByText("Record Details")).toBeVisible();
+    await expect(page.getByText("Loading...")).toBeHidden({ timeout: 10000 });
+
+    await page.getByTitle("Edit record").click();
+    // Edit modal replaces the view modal — its own heading/save affordance should appear.
+    await expect(page.getByRole("button", { name: /save/i })).toBeVisible({ timeout: 10000 });
   });
 });
